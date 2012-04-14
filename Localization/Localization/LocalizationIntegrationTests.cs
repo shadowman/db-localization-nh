@@ -9,6 +9,8 @@ using FluentNHibernate.Cfg.Db;
 using NHibernate.Cfg;
 using NHibernate.Tool.hbm2ddl;
 using System.IO;
+using System.Threading;
+using System.Globalization;
 
 
 namespace Localization
@@ -18,6 +20,7 @@ namespace Localization
     {
         private static long LOCALIZED_ARTICLE_ID = 1;
         private static string DEFAULT_TITLE = "Default title";
+        private static string ES_TITLE = "Título";
 
         [ClassInitialize]
         public static void StaticTestsInitialization(TestContext context)
@@ -88,6 +91,33 @@ namespace Localization
                 Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
                 Assert.AreEqual(DEFAULT_TITLE, article.Title);
             }
+        }
+
+        [TestMethod]
+        public void DefaultVersionOfTheArticlesTitleWillBeLoadedUsingProvidedCultureIfAvailable()
+        {
+            CultureInfo culture = new CultureInfo("en-EN");
+            using (ISession session = BuildLocalizedSession(culture))
+            {
+                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(DEFAULT_TITLE, article.Title);
+            }
+        }
+
+        [TestMethod]
+        public void LocalizedVersionOfTheArticlesTitleWillBeLoadedUsingProvidedCultureIfAvailable()
+        {
+            CultureInfo culture = new CultureInfo("es-ES");
+            using (ISession session = BuildLocalizedSession(culture))
+            {
+                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(ES_TITLE, article.Title);
+            }
+        }
+
+        private static ISession BuildLocalizedSession(CultureInfo culture)
+        {
+            return Factory.OpenSession();
         }
 
         public static ISessionFactory Factory { get; set; }

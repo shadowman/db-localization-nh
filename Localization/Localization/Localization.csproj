@@ -67,7 +67,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Entities\Article.cs" />
+    <Compile Include="LocalizationInterceptorTests.cs" />
     <Compile Include="Mappings\ArticleMapping.cs" />
+    <Compile Include="NHibernate\LocalizationInterceptor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="LocalizationIntegrationTests.cs" />
   </ItemGroup>
