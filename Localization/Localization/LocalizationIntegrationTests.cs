@@ -11,6 +11,7 @@ using NHibernate.Tool.hbm2ddl;
 using System.IO;
 using System.Threading;
 using System.Globalization;
+using Localization.NHibernate;
 
 
 namespace Localization
@@ -115,7 +116,7 @@ namespace Localization
 
         private static ISession BuildLocalizedSession(CultureInfo culture)
         {
-            return Factory.OpenSession();
+            return Factory.OpenSession(new LocalizationInterceptor(culture, Factory));
         }
 
         public static ISessionFactory Factory { get; set; }

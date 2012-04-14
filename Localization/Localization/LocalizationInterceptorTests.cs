@@ -7,58 +7,99 @@ using System.Globalization;
 using NHibernate;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NHibernate.Type;
+using System.Threading;
+using Moq;
+using Moq.Language;
 
 namespace Localization
 {
     [TestClass]
     public class LocalizationInterceptorTests
     {
+        private Mock<ISession> session;
+        private Mock<ISessionFactory> factory;
+        private object[] Values = new object[2];
+        private string[] Properties = new string[] { "Id", "Title" };
+        private IType[] Types = new IType[] { null, null };
+        private CultureInfo CULTURE_SPANISH = new CultureInfo("es-ES");
+        private LocalizationInterceptor interceptor;
+
         [TestInitialize]
         public void TestsInitialization()
         {
+            factory = new Mock<ISessionFactory>();
+            session = new Mock<ISession>();
+            factory.Setup(x => x.GetCurrentSession()).Returns(session.Object);
+
+            interceptor = new LocalizationInterceptor(CULTURE_SPANISH, factory.Object);
+
         }
 
         [TestMethod]
-        public void LocalizationInterceptorHasAConstructorThatReceivesTheCultureHeShouldWorkIn()
+        public void LocalizationInterceptorHasAConstructorThatReceivesTheCultureAndSessionsFactoryHeShouldWorkWith()
         {
-            new LocalizationInterceptor(new CultureInfo("es-ES"));
+            new LocalizationInterceptor((CultureInfo)null, (ISessionFactory)null);
         }
 
         [TestMethod]
         public void LocalizationInterceptorStoresCulturePassedToHimInTheConstructor()
         {
-            CultureInfo culture = new CultureInfo("es-ES");
+            LocalizationInterceptor interceptor = new LocalizationInterceptor(CULTURE_SPANISH, null);
 
-            LocalizationInterceptor interceptor = new LocalizationInterceptor(culture);
-
-            Assert.AreEqual(culture, interceptor.Culture);
+            Assert.AreEqual(CULTURE_SPANISH, interceptor.Culture);
         }
 
         [TestMethod]
-        public void LocalizationInterceptorOnLoadTriesToFindLocalizedValuesForTheProvidedEntityFromTheCurrentSessionIfPossible()
+        public void LocalizationInterceptorUsesCurrentThreadCultureIfNoCultureIsPassed()
         {
-            Assert.Fail();
+            LocalizationInterceptor interceptor = new LocalizationInterceptor(null);
+
+            Assert.AreEqual(Thread.CurrentThread.CurrentCulture, interceptor.Culture);
         }
 
         [TestMethod]
-        public void LocalizationInterceptorOnLoadSetsTheArticlesTitlePropertyToItsLocalizedValue()
+        public void LocalizationInterceptorStoresSessionsFactoryPassedToHimInTheConstructor()
         {
-            CultureInfo culture = new CultureInfo("es-ES");
-            LocalizationInterceptor interceptor = new LocalizationInterceptor(culture);
+            LocalizationInterceptor interceptor = new LocalizationInterceptor(null, factory.Object);
 
-            object[] values     = new object[2];
-            string[] properties = new string[] { "Id", "Title" };
-            IType[] types       = new IType[] { null, null };
+            Assert.AreEqual(factory.Object, interceptor.Factory);
+        }
 
+        [TestMethod]
+        public void LocalizationInterceptorOnLoadCallsOnFactoryToGetTheCurrentSession()
+        {
             interceptor.OnLoad(
                 new Article(),
                 ArticlesMotherObject.LOCALIZED_ARTICLE_ID,
-                values,
-                properties,
-                types
+                Values,
+                Properties,
+                Types
             );
 
-            Assert.AreEqual(values[1], ArticlesMotherObject.ES_TITLE);
+            factory.Verify(x=>x.GetCurrentSession(), Times.AtLeastOnce());
+        }
+
+        [TestMethod]
+        public void LocalizationInterceptorOnLoadSetsTheArticlesTitlePropertyToItsLocalizedValueIfItExists()
+        {
+            session.Setup(
+                x => x.Get<LocalizationEntry>(It.IsAny<LocalizationEntryId>())
+            ).Returns(
+                new LocalizationEntry()
+                {
+                    Message = ArticlesMotherObject.ES_TITLE
+                }
+            );
+            
+            interceptor.OnLoad(
+                new Article(),
+                ArticlesMotherObject.LOCALIZED_ARTICLE_ID,
+                Values,
+                Properties,
+                Types
+            );
+
+            Assert.AreEqual(ArticlesMotherObject.ES_TITLE, Values[1]);
         }
     }
 }
