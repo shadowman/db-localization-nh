@@ -16,11 +16,20 @@ namespace Localization
     [TestClass]
     public class LocalizationIntegrationTests
     {
+        private static long LOCALIZED_ARTICLE_ID = 1;
+        private static string DEFAULT_TITLE = "Default title";
 
         [ClassInitialize]
         public static void StaticTestsInitialization(TestContext context)
         {
-            ISessionFactory factory = Fluently.Configure()
+            InitializeDatabaseProvider();
+
+            PopulateDatabaseWithReadOnlyTestData();
+        }
+
+        private static void InitializeDatabaseProvider()
+        {
+            Factory = Fluently.Configure()
                 .Database(
                     SQLiteConfiguration.Standard
                         .UsingFile("sample.db")
@@ -35,6 +44,18 @@ namespace Localization
                 .BuildSessionFactory();
         }
 
+        private static void PopulateDatabaseWithReadOnlyTestData()
+        {
+            using (ISession session = Factory.OpenSession())
+            {
+                Article article = new Article() { 
+                    Id = LOCALIZED_ARTICLE_ID, 
+                    Title = DEFAULT_TITLE 
+                };
+                session.Save(article);
+            }
+        }
+
         public static void BuildDatabase(Configuration configuration)
         {
             if (File.Exists("sample.db"))
@@ -44,10 +65,31 @@ namespace Localization
             new SchemaExport(configuration).Create(true, true);
         }
 
-        [TestMethod]
-        public void LocalizedEntityCanBeLoadedUsingNHibernateAndSQLLiteDatabase()
+        [TestInitialize]
+        public void TestInitialization()
         {
-            Assert.Fail();
         }
+
+        [TestMethod]
+        public void ArticleCanBeLoadedUsingNHibernateAndSQLLiteDatabase()
+        {
+            using (ISession session = Factory.OpenSession())
+            {
+                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
+                Assert.IsNotNull(article);
+            }
+        }
+        
+        [TestMethod]
+        public void ArticleTitleCanBeLoadedUsingNHibernateAndSQLLiteDatabase()
+        {
+            using (ISession session = Factory.OpenSession())
+            {
+                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(DEFAULT_TITLE, article.Title);
+            }
+        }
+
+        public static ISessionFactory Factory { get; set; }
     }
 }
