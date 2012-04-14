@@ -66,6 +66,7 @@
     </CodeAnalysisDependentAssemblyPaths>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArticlesMotherObject.cs" />
     <Compile Include="Entities\Article.cs" />
     <Compile Include="LocalizationInterceptorTests.cs" />
     <Compile Include="Mappings\ArticleMapping.cs" />

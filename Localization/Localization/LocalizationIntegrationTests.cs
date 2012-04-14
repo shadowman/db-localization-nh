@@ -18,9 +18,7 @@ namespace Localization
     [TestClass]
     public class LocalizationIntegrationTests
     {
-        private static long LOCALIZED_ARTICLE_ID = 1;
-        private static string DEFAULT_TITLE = "Default title";
-        private static string ES_TITLE = "Título";
+        
 
         [ClassInitialize]
         public static void StaticTestsInitialization(TestContext context)
@@ -52,8 +50,8 @@ namespace Localization
             using (ISession session = Factory.OpenSession())
             {
                 Article article = new Article() { 
-                    Id = LOCALIZED_ARTICLE_ID, 
-                    Title = DEFAULT_TITLE 
+                    Id = ArticlesMotherObject.LOCALIZED_ARTICLE_ID,
+                    Title = ArticlesMotherObject.DEFAULT_TITLE 
                 };
                 session.Save(article);
             }
@@ -78,7 +76,7 @@ namespace Localization
         {
             using (ISession session = Factory.OpenSession())
             {
-                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
+                Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
                 Assert.IsNotNull(article);
             }
         }
@@ -88,8 +86,8 @@ namespace Localization
         {
             using (ISession session = Factory.OpenSession())
             {
-                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
-                Assert.AreEqual(DEFAULT_TITLE, article.Title);
+                Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(ArticlesMotherObject.DEFAULT_TITLE, article.Title);
             }
         }
 
@@ -99,8 +97,8 @@ namespace Localization
             CultureInfo culture = new CultureInfo("en-EN");
             using (ISession session = BuildLocalizedSession(culture))
             {
-                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
-                Assert.AreEqual(DEFAULT_TITLE, article.Title);
+                Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(ArticlesMotherObject.DEFAULT_TITLE, article.Title);
             }
         }
 
@@ -110,8 +108,8 @@ namespace Localization
             CultureInfo culture = new CultureInfo("es-ES");
             using (ISession session = BuildLocalizedSession(culture))
             {
-                Article article = session.Get<Article>(LOCALIZED_ARTICLE_ID);
-                Assert.AreEqual(ES_TITLE, article.Title);
+                Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(ArticlesMotherObject.ES_TITLE, article.Title);
             }
         }
 
