@@ -80,6 +80,25 @@ namespace Localization
         }
 
         [TestMethod]
+        public void LocalizationInterceptorOnLoadOpensANewSessionIfNoCurrentSessionIsBound()
+        {
+            factory.Setup(x => x.GetCurrentSession()).Throws<HibernateException>(); ;
+            factory.Setup(x => x.OpenSession()).Returns(session.Object);
+
+            interceptor.OnLoad(
+                new Article(),
+                ArticlesMotherObject.LOCALIZED_ARTICLE_ID,
+                Values,
+                Properties,
+                Types
+            );
+
+            factory.Verify(x => x.OpenSession(), Times.AtLeastOnce());
+        }
+
+
+
+        [TestMethod]
         public void LocalizationInterceptorOnLoadSetsTheArticlesTitlePropertyToItsLocalizedValueIfItExists()
         {
             session.Setup(
@@ -87,7 +106,7 @@ namespace Localization
             ).Returns(
                 new LocalizationEntry()
                 {
-                    Message = ArticlesMotherObject.ES_TITLE
+                    Message = ArticlesMotherObject.SPANISH_TITLE
                 }
             );
             
@@ -99,7 +118,7 @@ namespace Localization
                 Types
             );
 
-            Assert.AreEqual(ArticlesMotherObject.ES_TITLE, Values[1]);
+            Assert.AreEqual(ArticlesMotherObject.SPANISH_TITLE, Values[1]);
         }
     }
 }

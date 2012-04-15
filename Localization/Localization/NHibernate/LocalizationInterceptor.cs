@@ -24,7 +24,7 @@ namespace Localization.NHibernate
 
         public override bool OnLoad(object entity, object id, object[] state, string[] propertyNames, global::NHibernate.Type.IType[] types)
         {
-            using (ISession session = Factory.GetCurrentSession())
+            using (ISession session = GetOrCreateSession())
             {
                 for (int i = 0; i < propertyNames.Length; i++)
                 {
@@ -44,6 +44,20 @@ namespace Localization.NHibernate
                 }
             }
             return base.OnLoad(entity, id, state, propertyNames, types);
+        }
+
+        private ISession GetOrCreateSession()
+        {
+            ISession session = null;
+            try
+            {
+                session = Factory.GetCurrentSession();
+            }
+            catch (HibernateException)
+            {
+                session = Factory.OpenSession();
+            }
+            return session;
         }
 
         public CultureInfo Culture { get; set; }

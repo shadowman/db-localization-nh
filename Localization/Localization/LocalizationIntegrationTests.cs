@@ -19,7 +19,10 @@ namespace Localization
     [TestClass]
     public class LocalizationIntegrationTests
     {
-        
+        private static CultureInfo DEFAULT_CULTURE = new CultureInfo("en-US");
+        private static CultureInfo SPANISH_CULTURE = new CultureInfo("es-ES");
+        private static CultureInfo NOT_FOUND_CULTURE = new CultureInfo("fr-FR");
+        private static string LOCALIZED_PROPERTY_NAME = "Title";
 
         [ClassInitialize]
         public static void StaticTestsInitialization(TestContext context)
@@ -51,15 +54,30 @@ namespace Localization
             using (ISession session = Factory.OpenSession())
             {
                 Article article = new Article() { 
-                    Id = ArticlesMotherObject.LOCALIZED_ARTICLE_ID,
-                    Title = ArticlesMotherObject.DEFAULT_TITLE 
+                    Id      = ArticlesMotherObject.LOCALIZED_ARTICLE_ID,
+                    Title   = ArticlesMotherObject.DEFAULT_TITLE 
                 };
                 session.Save(article);
+
+                LocalizationEntry entry = new LocalizationEntry()
+                {
+                    Id = new LocalizationEntryId()
+                    {
+                        EntityId = ArticlesMotherObject.LOCALIZED_ARTICLE_ID.ToString(),
+                        Culture  = SPANISH_CULTURE.ThreeLetterISOLanguageName,
+                        Property = LOCALIZED_PROPERTY_NAME,
+                        Type     = typeof(Article).ToString()
+                    },
+                    Message = ArticlesMotherObject.SPANISH_TITLE
+                };
+                session.Save(entry);
+                session.Flush();
             }
         }
 
         public static void BuildDatabase(Configuration configuration)
         {
+            configuration.SetProperty("current_session_context_class", "thread_static");
             if (File.Exists("sample.db"))
             {
                 File.Delete("sample.db");
@@ -81,6 +99,23 @@ namespace Localization
                 Assert.IsNotNull(article);
             }
         }
+
+        [TestMethod]
+        public void LocalizationEntryCanBeLoadedUsingNHibernateAndSQLLiteDatabase()
+        {
+            using (ISession session = Factory.OpenSession())
+            {
+                LocalizationEntry entry = session.Get<LocalizationEntry>(
+                    new LocalizationEntryId() {
+                        Type     = typeof(Article).ToString(),
+                        Culture  = SPANISH_CULTURE.ThreeLetterISOLanguageName,
+                        EntityId = ArticlesMotherObject.LOCALIZED_ARTICLE_ID.ToString(),
+                        Property = LOCALIZED_PROPERTY_NAME
+                    }
+                );
+                Assert.IsNotNull(entry);
+            }
+        }
         
         [TestMethod]
         public void ArticleTitleCanBeLoadedUsingNHibernateAndSQLLiteDatabase()
@@ -93,10 +128,9 @@ namespace Localization
         }
 
         [TestMethod]
-        public void DefaultVersionOfTheArticlesTitleWillBeLoadedUsingProvidedCultureIfAvailable()
+        public void EnlgishVersionOfTheArticlesTitleWillBeLoadedUsingProvidedCultureIfAvailable()
         {
-            CultureInfo culture = new CultureInfo("en-EN");
-            using (ISession session = BuildLocalizedSession(culture))
+            using (ISession session = BuildLocalizedSession(DEFAULT_CULTURE))
             {
                 Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
                 Assert.AreEqual(ArticlesMotherObject.DEFAULT_TITLE, article.Title);
@@ -104,13 +138,23 @@ namespace Localization
         }
 
         [TestMethod]
-        public void LocalizedVersionOfTheArticlesTitleWillBeLoadedUsingProvidedCultureIfAvailable()
+        public void SpanishVersionOfTheArticlesTitleWillBeLoadedUsingProvidedCultureIfAvailable()
         {
-            CultureInfo culture = new CultureInfo("es-ES");
-            using (ISession session = BuildLocalizedSession(culture))
+            using (ISession session = BuildLocalizedSession(SPANISH_CULTURE))
             {
                 Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
-                Assert.AreEqual(ArticlesMotherObject.ES_TITLE, article.Title);
+                Assert.AreEqual(ArticlesMotherObject.SPANISH_TITLE, article.Title);
+            }
+        }
+
+        [TestMethod]
+        public void DefaultVersionOfTheArticlesTitleWillBeLoadedIfProvidedCultureIsNotAvailable()
+        {
+            
+            using (ISession session = BuildLocalizedSession(NOT_FOUND_CULTURE))
+            {
+                Article article = session.Get<Article>(ArticlesMotherObject.LOCALIZED_ARTICLE_ID);
+                Assert.AreEqual(ArticlesMotherObject.DEFAULT_TITLE, article.Title);
             }
         }
 

@@ -19,10 +19,10 @@ namespace Localization.NHibernate
                 LocalizationEntryId other = obj as LocalizationEntryId;
                 if (other != null)
                 {
-                    return this.Type == other.Type &&
+                    return this.Type      == other.Type &&
                             this.Property == other.Property &&
                             this.EntityId == other.EntityId &&
-                            this.Culture == other.Culture;
+                            this.Culture  == other.Culture;
                 }
             }
             return false;
