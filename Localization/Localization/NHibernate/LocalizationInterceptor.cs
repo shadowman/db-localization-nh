@@ -61,7 +61,6 @@ namespace Localization.NHibernate
         }
 
         public CultureInfo Culture { get; set; }
-
         public ISessionFactory Factory { get; set; }
     }
 }

@@ -11,6 +11,7 @@ namespace Localization.Mappings
     {
         public LocalizationEntryMapping()
         {
+            Cache.ReadWrite();
             CompositeId()
                 .ComponentCompositeIdentifier(x => x.Id)
                 .KeyProperty(x => x.Id.Culture)
